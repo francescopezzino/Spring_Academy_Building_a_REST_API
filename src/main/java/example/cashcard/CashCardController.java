@@ -1,5 +1,9 @@
 package example.cashcard;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -7,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.List;
 import java.util.Optional;
 import java.net.URI;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,4 +46,24 @@ class CashCardController {
                 .toUri();
         return ResponseEntity.created(locationOfNewCashCard).build();
     }
+
+/*  The problem is that we have two methods mapped to the same endpoint.
+    Spring detects this error at runtime, during the Spring startup process.
+    @GetMapping()
+    private ResponseEntity<Iterable<CashCard>> findAll() {
+        return ResponseEntity.ok(cashCardRepository.findAll());
+    }*/
+
+    @GetMapping
+    private ResponseEntity<List<CashCard>> findAll(Pageable pageable) {
+        Page<CashCard> page = cashCardRepository.findAll(
+                PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        pageable.getSortOr(Sort.by(Sort.Direction.ASC, "amount"))
+                ));
+        return ResponseEntity.ok(page.getContent());
+    }
+
+
 }
